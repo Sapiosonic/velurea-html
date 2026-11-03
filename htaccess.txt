@@ -1,0 +1,101 @@
+# ATENÇÃO: o GitHub Pages NÃO lê este arquivo (não é Apache).
+# Ele serve para quando o site for para hospedagem Apache/cPanel.
+#
+# Velurea — site estático. Configuração Apache (hospedagem compartilhada, cPanel).
+#
+# Renomeie para `.htaccess` na raiz do site. No File Manager do cPanel, ative
+# "Show Hidden Files" para enxergá-lo.
+
+# ---------------------------------------------------------------------------
+# Página de erro
+# ---------------------------------------------------------------------------
+ErrorDocument 404 /404/index.html
+
+# ---------------------------------------------------------------------------
+# Roteamento
+# ---------------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Força HTTPS.
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+  # Serve /contato a partir de /contato/index.html sem redirecionar para
+  # /contato/ — as tags canonical apontam para a URL sem barra final.
+  #
+  # ATENÇÃO: não acrescente `RewriteCond %{REQUEST_FILENAME} !-d`. /contato É um
+  # diretório, e essa condição impede o rewrite de disparar: todas as subpáginas
+  # passam a responder 403.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{DOCUMENT_ROOT}/$1/index.html -f
+  RewriteRule ^(.+?)/?$ /$1/index.html [L]
+</IfModule>
+
+<IfModule mod_dir.c>
+  DirectorySlash Off
+  DirectoryIndex index.html
+</IfModule>
+
+# Obrigatório junto com DirectorySlash Off, para que um diretório sem
+# index.html não liste o próprio conteúdo publicamente.
+Options -Indexes
+
+# ---------------------------------------------------------------------------
+# Cache
+# ---------------------------------------------------------------------------
+# DIFERENÇA IMPORTANTE em relação à versão anterior do site: lá os arquivos
+# tinham hash no nome (styles-BSXW9cbb.css), então podiam ser cacheados para
+# sempre — mudar o conteúdo mudava o nome. Aqui os nomes são fixos
+# (css/style.css), feitos para edição manual. Cache eterno faria o visitante
+# que já conhece o site continuar vendo a versão antiga depois de uma
+# alteração sua.
+<IfModule mod_expires.c>
+  ExpiresActive On
+
+  # HTML: sempre revalida.
+  <FilesMatch "\.html$">
+    ExpiresDefault "access plus 0 seconds"
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+
+  # CSS e JS: são os que você edita. Cache curto, com revalidação.
+  <FilesMatch "\.(css|js)$">
+    ExpiresDefault "access plus 1 hour"
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+  </FilesMatch>
+
+  # Imagens e fontes: trocam raramente.
+  <FilesMatch "\.(jpe?g|png|gif|svg|webp|avif|ico|woff2?)$">
+    ExpiresDefault "access plus 30 days"
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Compressão
+# ---------------------------------------------------------------------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+  AddOutputFilterByType DEFLATE application/javascript application/json
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Segurança
+# ---------------------------------------------------------------------------
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always unset X-Powered-By
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# OPCIONAL — domínio canônico. Descomente UM bloco e troque pelo domínio real.
+# ---------------------------------------------------------------------------
+# <IfModule mod_rewrite.c>
+#   # Sem www como oficial:
+#   RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+#   RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+# </IfModule>

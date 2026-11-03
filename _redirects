@@ -1,0 +1,3 @@
+# 404 real (status 404, não 200) para URLs inexistentes.
+# Arquivos que existem continuam sendo servidos antes desta regra.
+/*    /404/index.html    404

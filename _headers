@@ -1,0 +1,15 @@
+# Nomes de arquivo aqui são fixos (sem hash), então nada de cache eterno:
+# editar css/style.css precisa chegar a quem já visitou o site.
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+/css/*
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/js/*
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/img/*
+  Cache-Control: public, max-age=2592000
